@@ -37,7 +37,7 @@ const client = new OAuth2Client(
     }
   
     @Put(':chatId, :city')
-    async updateUserByChatId(
+    async updateUserCity(
       @Param('chatId, city')
       chatId: number,
       city: string,
@@ -47,14 +47,14 @@ const client = new OAuth2Client(
       return this.userService.updateByChatId(chatId, city, user);
     }
   
-    @Put(':chatId')
+    @Put(':id')
     async updateUser(
-      @Param('chatId')
-      chatId:number,
+      @Param('id')
+      id:string,
       @Body()
       user: UpdateUserDto,
     ): Promise<User> {
-      return this.userService.updateById(chatId, user);
+      return this.userService.updateById(id, user);
     }
 
     @Delete(':id')

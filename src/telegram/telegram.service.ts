@@ -47,11 +47,10 @@ export class TelegramService {
     } else if (messageText === '/unsubscribe') {
       try{
         this.users[chatId].isSubscribe = false;
-        const subscribed = await this.userService.updateById(chatId, this.users[chatId]);
-        console.log(subscribed);
+        const subscribed = await this.userService.updateUserById(chatId, this.users[chatId]);
         if(subscribed){
           this.sendMessageToUser(chatId, 'You are unsubscribed from daily weather updates.');
-          // delete this.subscriptions[chatId];
+          delete this.subscriptions[chatId];
         }
       }catch(error){
         this.logger.debug("Error - Unsubscribe", error);
@@ -129,7 +128,6 @@ export class TelegramService {
 
     try{
       const subscriptions = await this.userService.findAll();
-      console.log(subscriptions);
       subscriptions.map((subscription) =>{
         if(subscription.isSubscribe && !subscription.isBlock)
           this.getWeatherAndSend(subscription["chatId"].toString(), subscription["city"]);
