@@ -47,14 +47,15 @@ export class TelegramService {
     } else if (messageText === '/unsubscribe') {
       try{
         this.users[chatId].isSubscribe = false;
-          const subscribed = await this.userService.updateByChatId(chatId, this.users[chatId].city, this.users[chatId]);
+        const subscribed = await this.userService.updateById(chatId, this.users[chatId]);
+        console.log(subscribed);
         if(subscribed){
           this.sendMessageToUser(chatId, 'You are unsubscribed from daily weather updates.');
-          delete this.subscriptions[chatId];
+          // delete this.subscriptions[chatId];
         }
       }catch(error){
         this.logger.debug("Error - Unsubscribe", error);
-        this.sendMessageToUser(chatId, "Unabel to Unsubbscribe");
+        this.sendMessageToUser(chatId, "Unable to Unsubscribe");
       }
     } else {
       if (this.users[chatId] && this.users[chatId].state === 'awaitingCity') {
@@ -62,18 +63,24 @@ export class TelegramService {
         this.users[chatId].state = 'cityConfirmed';
         this.users[chatId].chatId = chatId;
 
-        try{
-          const savedUser = await this.userService.create(this.users[chatId]);
-        }catch(error){
-          this.logger.debug("Error in saving User - ",error);
-        }
-
-        this.sendMessageToUser(chatId, `Your city is set to ${messageText}. You can now subscribe to daily weather updates using /subscribe.`);
-        this.getWeatherAndSend(chatId, messageText);
+        const status = this.getWeatherAndSend(chatId, messageText);
+        status.then(async (statusValue)=>{
+          if(!statusValue) return;
+          this.sendMessageToUser(chatId, `Your city is set to ${messageText}. You can now subscribe to daily weather updates using /subscribe.`);
+          try{
+            const savedUser = await this.userService.create(this.users[chatId]);
+          }catch(error){
+            this.logger.debug("Error in saving User - ",error);
+          }
+        })
+    
       } else {
         this.sendMessageToUser(chatId, 'Sorry, I didn\'t understand your message.');
       }
     }
+
+    // console.log("USers")
+    // console.log(this.users);
   }
 
   async getWeatherAndSend(chatId: string, city: string) {
@@ -82,6 +89,7 @@ export class TelegramService {
 
     try {
       const response = await axios.get(apiUrl);
+      // console.log(response.data);
       const weatherData = response.data;
       
 
@@ -109,11 +117,11 @@ export class TelegramService {
         + `Sunrise: ${sunriseTime} ${sunriseEmoji}\n`
         + `Sunset: ${sunsetTime} ${sunsetEmoji}`;
 
-        
-
       this.sendMessageToUser(chatId, message);
+      return true;
     } catch (error) {
-      this.sendMessageToUser(chatId, 'Sorry, '+error);
+      this.sendMessageToUser(chatId, 'Sorry, '+error.response.data.message);
+      return false;
     }
   }
 
@@ -121,7 +129,7 @@ export class TelegramService {
 
     try{
       const subscriptions = await this.userService.findAll();
-      // console.log(subscriptions[0]);
+      console.log(subscriptions);
       subscriptions.map((subscription) =>{
         if(subscription.isSubscribe && !subscription.isBlock)
           this.getWeatherAndSend(subscription["chatId"].toString(), subscription["city"]);
