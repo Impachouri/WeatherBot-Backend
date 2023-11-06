@@ -47,7 +47,7 @@ export class TelegramService {
     } else if (messageText === '/unsubscribe') {
       try{
         this.users[chatId].isSubscribe = false;
-        const subscribed = await this.userService.updateUserById(chatId, this.users[chatId]);
+        const subscribed = await this.userService.updateUserById(chatId, {"isSubscribe":false});
         if(subscribed){
           this.sendMessageToUser(chatId, 'You are unsubscribed from daily weather updates.');
           delete this.subscriptions[chatId];

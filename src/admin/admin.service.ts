@@ -36,7 +36,7 @@ export class UserService {
   //   });
   // }
 
-  async updateUserById(chatId: number, user: User): Promise<any> {
+  async updateUserById(chatId: number, user: any): Promise<any> {
     return await this.userModel.updateMany({chatId}, user, {
       new: true,
       runValidators: true,
